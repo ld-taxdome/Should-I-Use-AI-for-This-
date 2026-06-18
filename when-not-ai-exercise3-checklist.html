@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exercise 3 — Should I Use AI for This?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0F1F3D;
+    --teal: #0F766E;
+    --teal-light: #CCFBF1;
+    --teal-border: #5EEAD4;
+    --blue: #1C4ED8;
+    --green: #16A34A;
+    --green-light: #DCFCE7;
+    --green-border: #86EFAC;
+    --red: #DC2626;
+    --red-light: #FEE2E2;
+    --red-border: #FECACA;
+    --amber: #D97706;
+    --amber-light: #FEF3C7;
+    --amber-border: #FCD34D;
+    --grey-50: #F8FAFC;
+    --grey-100: #F1F5F9;
+    --grey-200: #E2E8F0;
+    --grey-400: #94A3B8;
+    --grey-600: #475569;
+    --grey-900: #0F172A;
+    --white: #FFFFFF;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--grey-50); color: var(--grey-900); min-height: 100vh; padding: 0 0 60px; }
+  header { background: var(--navy); color: var(--white); padding: 36px 40px 32px; position: relative; overflow: hidden; }
+  header::after { content: ''; position: absolute; right: -60px; top: -60px; width: 260px; height: 260px; border-radius: 50%; background: rgba(15,118,110,0.18); pointer-events: none; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-border); margin-bottom: 10px; }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(24px, 4vw, 36px); font-weight: 800; line-height: 1.1; margin-bottom: 10px; }
+  .subtitle { font-size: 14px; color: #CBD5E1; max-width: 520px; line-height: 1.6; }
+  .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+  .instructions { background: var(--white); border-left: 4px solid var(--teal); border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 32px 0 28px; font-size: 14px; color: var(--grey-600); line-height: 1.6; }
+  .instructions strong { color: var(--navy); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .tab { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--grey-200); background: var(--white); color: var(--grey-600); transition: all 0.15s; }
+  .tab:hover { border-color: var(--teal); color: var(--teal); }
+  .tab.active { background: var(--teal); border-color: var(--teal); color: var(--white); }
+
+  /* Panel */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Scenario box */
+  .scenario-box { background: var(--white); border: 1.5px solid var(--grey-200); border-radius: 12px; padding: 22px 24px; margin-bottom: 20px; }
+  .scenario-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); margin-bottom: 8px; }
+  .scenario-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+  .scenario-desc { font-size: 14px; color: var(--grey-600); line-height: 1.7; }
+
+  /* Progress bar */
+  .prog-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .prog-label { font-size: 13px; color: var(--grey-600); flex-shrink: 0; }
+  .prog-track { flex: 1; background: var(--grey-100); border-radius: 99px; height: 8px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--teal); border-radius: 99px; transition: width 0.3s; }
+  .prog-count { font-size: 13px; font-weight: 700; color: var(--teal); flex-shrink: 0; }
+
+  /* Checklist */
+  .checklist { background: var(--white); border: 1.5px solid var(--grey-200); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .checklist-hdr { background: var(--grey-50); border-bottom: 1px solid var(--grey-200); padding: 12px 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--grey-400); }
+  .check-item { display: flex; align-items: flex-start; gap: 14px; padding: 15px 20px; border-bottom: 1px solid var(--grey-100); cursor: pointer; transition: background 0.12s; }
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: var(--grey-50); }
+  .check-item.flagged { background: var(--red-light); }
+  .check-item.cleared { background: var(--teal-light); }
+  .check-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--grey-300, #CBD5E1); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.12s; margin-top: 2px; background: var(--white); }
+  .check-item.flagged .check-box { background: var(--red); border-color: var(--red); color: white; }
+  .check-item.cleared .check-box { background: var(--teal); border-color: var(--teal); color: white; }
+  .check-content { flex: 1; }
+  .check-q { font-size: 14px; font-weight: 500; color: var(--grey-900); line-height: 1.5; margin-bottom: 4px; }
+  .check-hint { font-size: 12px; color: var(--grey-400); line-height: 1.5; }
+  .check-item.flagged .check-q { color: var(--red); }
+  .check-item.cleared .check-q { color: var(--teal); }
+  .toggle-row { display: flex; gap: 6px; margin-top: 8px; }
+  .tog { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; transition: all 0.12s; }
+  .tog-y { background: var(--teal-light); border-color: var(--teal-border); color: var(--teal); }
+  .tog-y:hover, .tog-y.on { background: var(--teal); color: white; border-color: var(--teal); }
+  .tog-n { background: var(--red-light); border-color: var(--red-border); color: var(--red); }
+  .tog-n:hover, .tog-n.on { background: var(--red); color: white; border-color: var(--red); }
+
+  /* Actions */
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .btn { padding: 11px 22px; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s; }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-teal { background: var(--teal); color: white; }
+  .btn-secondary { background: var(--grey-200); color: var(--grey-900); }
+
+  /* Verdict */
+  .verdict { display: none; border-radius: 12px; padding: 22px 24px; margin-bottom: 20px; }
+  .verdict.show { display: block; }
+  .verdict.go { background: var(--green-light); border: 1.5px solid var(--green-border); }
+  .verdict.caution { background: var(--amber-light); border: 1.5px solid var(--amber-border); }
+  .verdict.stop { background: var(--red-light); border: 1.5px solid var(--red-border); }
+  .verdict-icon { font-size: 28px; margin-bottom: 8px; }
+  .verdict-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .verdict.go .verdict-title { color: var(--green); }
+  .verdict.caution .verdict-title { color: var(--amber); }
+  .verdict.stop .verdict-title { color: var(--red); }
+  .verdict-body { font-size: 13px; color: var(--grey-600); line-height: 1.7; }
+
+  @media (max-width: 600px) {
+    header { padding: 28px 20px; }
+    .container { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Exercise 3 of 3 — When Not to Use AI</div>
+  <h1>Should I Use AI for This?</h1>
+  <p class="subtitle">Work through three workplace scenarios and use the checklist to decide whether AI is the right call.</p>
+</header>
+
+<div class="container">
+  <div class="instructions">
+    <strong>How it works:</strong> Read each scenario, then answer <strong>Yes</strong> or <strong>No</strong> for each checklist item. Click <strong>Get Verdict</strong> to find out whether you should use AI — and why.
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(1)">🗂️ Scenario 1</button>
+    <button class="tab" onclick="switchTab(2)">📣 Scenario 2</button>
+    <button class="tab" onclick="switchTab(3)">🩺 Scenario 3</button>
+  </div>
+
+  <!-- Scenario 1 -->
+  <div class="panel active" id="panel-1">
+    <div class="scenario-box">
+      <div class="scenario-tag">Operations</div>
+      <div class="scenario-title">Summarizing Last Quarter's Team Performance</div>
+      <div class="scenario-desc">Your manager has asked you to put together a summary of last quarter's team performance. You want to use an AI tool to help structure and write it. The summary will include individual team members' names, output metrics, and notes from one-to-one check-ins — including a mention that one team member is going through a difficult period personally.</div>
+    </div>
+    <div class="prog-row">
+      <span class="prog-label">Answered</span>
+      <div class="prog-track"><div class="prog-fill" id="pf-1" style="width:0%"></div></div>
+      <span class="prog-count" id="pc-1">0 / 6</span>
+    </div>
+    <div class="checklist">
+      <div class="checklist-hdr">Run through the checklist before deciding</div>
+      <div class="check-item" id="i-1-1" data-risk="yes">
+        <div class="check-box" id="b-1-1">?</div>
+        <div class="check-content">
+          <div class="check-q">Does this task include personal information about named individuals?</div>
+          <div class="check-hint">Names combined with performance data or personal context counts as sensitive personal data.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(1,1,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(1,1,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-1-2" data-risk="yes">
+        <div class="check-box" id="b-1-2">?</div>
+        <div class="check-content">
+          <div class="check-q">Does it include sensitive HR information (personal difficulties, health context)?</div>
+          <div class="check-hint">References to personal difficulties, health, or wellbeing — even without full detail — are sensitive.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(1,2,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(1,2,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-1-3" data-risk="yes">
+        <div class="check-box" id="b-1-3">?</div>
+        <div class="check-content">
+          <div class="check-q">Would an error or misrepresentation in this summary cause harm to a team member?</div>
+          <div class="check-hint">Performance summaries that reach management can affect someone's career, reputation, or wellbeing.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(1,3,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(1,3,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-1-4" data-risk="yes">
+        <div class="check-box" id="b-1-4">?</div>
+        <div class="check-content">
+          <div class="check-q">Does this task require empathy, judgment, or knowledge of the individuals involved?</div>
+          <div class="check-hint">Performance summaries often require nuance that AI cannot reliably provide.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(1,4,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(1,4,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-1-5" data-risk="no">
+        <div class="check-box" id="b-1-5">?</div>
+        <div class="check-content">
+          <div class="check-q">Is this tool on your company's approved list for processing HR-related content?</div>
+          <div class="check-hint">HR data often has stricter data handling requirements than general content.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(1,5,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(1,5,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-1-6" data-risk="yes">
+        <div class="check-box" id="b-1-6">?</div>
+        <div class="check-content">
+          <div class="check-q">Would a team member feel uncomfortable knowing AI had processed information about them?</div>
+          <div class="check-hint">The comfort and trust of the people whose data is involved matters — not just the legal minimum.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(1,6,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(1,6,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-teal" onclick="verdict(1)">Get Verdict</button>
+      <button class="btn btn-secondary" onclick="reset(1)">Reset</button>
+    </div>
+    <div class="verdict" id="v-1">
+      <div class="verdict-icon">🚫</div>
+      <div class="verdict-title">Don't Use AI</div>
+      <div class="verdict-body">This summary contains named individuals, sensitive HR data, and personal context that requires human judgment and care. AI should not process this content — the risk of misrepresentation, data exposure, and harm to team members is too high. Write this yourself, keep it factual, and handle any personal context with appropriate sensitivity and discretion.</div>
+    </div>
+  </div>
+
+  <!-- Scenario 2 -->
+  <div class="panel" id="panel-2">
+    <div class="scenario-box">
+      <div class="scenario-tag">Marketing & Comms</div>
+      <div class="scenario-title">Writing Social Media Posts for a Product Launch</div>
+      <div class="scenario-desc">Your team is launching a new product feature next week. You want to use an AI tool to help write a series of social media posts — short, punchy, and engaging. The content is fully public-facing and doesn't reference any internal data, client names, or confidential information.</div>
+    </div>
+    <div class="prog-row">
+      <span class="prog-label">Answered</span>
+      <div class="prog-track"><div class="prog-fill" id="pf-2" style="width:0%"></div></div>
+      <span class="prog-count" id="pc-2">0 / 6</span>
+    </div>
+    <div class="checklist">
+      <div class="checklist-hdr">Run through the checklist before deciding</div>
+      <div class="check-item" id="i-2-1" data-risk="no">
+        <div class="check-box" id="b-2-1">?</div>
+        <div class="check-content">
+          <div class="check-q">Does this task involve any sensitive, personal, or confidential data?</div>
+          <div class="check-hint">Public-facing marketing content with no personal data carries very low data risk.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(2,1,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(2,1,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-2-2" data-risk="no">
+        <div class="check-box" id="b-2-2">?</div>
+        <div class="check-content">
+          <div class="check-q">Could an error in the AI output cause significant harm if published?</div>
+          <div class="check-hint">Social posts carry reputational risk — but a human review before publishing addresses this.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(2,2,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(2,2,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-2-3" data-risk="no">
+        <div class="check-box" id="b-2-3">?</div>
+        <div class="check-content">
+          <div class="check-q">Does this task require professional expertise (legal, medical, or financial content)?</div>
+          <div class="check-hint">Marketing copy for a product feature is not a specialist domain — no professional verification required.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(2,3,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(2,3,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-2-4" data-risk="no">
+        <div class="check-box" id="b-2-4">?</div>
+        <div class="check-content">
+          <div class="check-q">Is human empathy or nuanced personal judgment required to complete this task?</div>
+          <div class="check-hint">Writing promotional copy is a creative task, not a relational or ethical judgment call.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(2,4,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(2,4,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-2-5" data-risk="no">
+        <div class="check-box" id="b-2-5">?</div>
+        <div class="check-content">
+          <div class="check-q">Will the output be used directly without human review?</div>
+          <div class="check-hint">You plan to review and edit the AI output before publishing — which is the right approach.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(2,5,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(2,5,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-2-6" data-risk="no">
+        <div class="check-box" id="b-2-6">?</div>
+        <div class="check-content">
+          <div class="check-q">Is the AI tool you're using on your company's approved list?</div>
+          <div class="check-hint">Even for low-risk content, only use approved tools for work tasks.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(2,6,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(2,6,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-teal" onclick="verdict(2)">Get Verdict</button>
+      <button class="btn btn-secondary" onclick="reset(2)">Reset</button>
+    </div>
+    <div class="verdict" id="v-2">
+      <div class="verdict-icon">✅</div>
+      <div class="verdict-title">Use AI</div>
+      <div class="verdict-body">This is a strong use case for AI. The content is non-sensitive, public-facing, and creative — exactly the kind of task where AI adds real value. Use AI to generate drafts, then review and edit to match your brand voice before publishing. Make sure you're using an approved tool.</div>
+    </div>
+  </div>
+
+  <!-- Scenario 3 -->
+  <div class="panel" id="panel-3">
+    <div class="scenario-box">
+      <div class="scenario-tag">Customer Success</div>
+      <div class="scenario-title">Responding to a Customer Complaint About Billing</div>
+      <div class="scenario-desc">A customer has emailed to complain about an unexpected charge on their account. The charge was an error on your company's side. You want to use AI to help draft a response. You plan to include the customer's name, account number, and the specific amount of the incorrect charge in the AI prompt to get a personalized response.</div>
+    </div>
+    <div class="prog-row">
+      <span class="prog-label">Answered</span>
+      <div class="prog-track"><div class="prog-fill" id="pf-3" style="width:0%"></div></div>
+      <span class="prog-count" id="pc-3">0 / 6</span>
+    </div>
+    <div class="checklist">
+      <div class="checklist-hdr">Run through the checklist before deciding</div>
+      <div class="check-item" id="i-3-1" data-risk="yes">
+        <div class="check-box" id="b-3-1">?</div>
+        <div class="check-content">
+          <div class="check-q">Does the prompt include the customer's name and account number?</div>
+          <div class="check-hint">Names and account numbers are PII and sensitive financial identifiers.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(3,1,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(3,1,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-3-2" data-risk="yes">
+        <div class="check-box" id="b-3-2">?</div>
+        <div class="check-content">
+          <div class="check-q">Does it include a specific financial amount tied to the customer?</div>
+          <div class="check-hint">Billing amounts linked to named customers are confidential financial data.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(3,2,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(3,2,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-3-3" data-risk="no">
+        <div class="check-box" id="b-3-3">?</div>
+        <div class="check-content">
+          <div class="check-q">Could you replace all identifying details with placeholders and still get a useful draft?</div>
+          <div class="check-hint">For example: "Help me draft an apology for an incorrect charge of $X to Customer A, Account #XXXX."</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(3,3,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(3,3,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-3-4" data-risk="yes">
+        <div class="check-box" id="b-3-4">?</div>
+        <div class="check-content">
+          <div class="check-q">Does this complaint involve a company error that requires a genuine, accountable response?</div>
+          <div class="check-hint">Situations where your company is at fault need human accountability — not just a polished AI draft.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(3,4,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(3,4,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-3-5" data-risk="no">
+        <div class="check-box" id="b-3-5">?</div>
+        <div class="check-content">
+          <div class="check-q">Will a human review and personalize the response before sending?</div>
+          <div class="check-hint">A complaint response should feel human, not templated — even if AI helped draft it.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(3,5,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(3,5,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+      <div class="check-item" id="i-3-6" data-risk="no">
+        <div class="check-box" id="b-3-6">?</div>
+        <div class="check-content">
+          <div class="check-q">Is the AI tool on your company's approved list?</div>
+          <div class="check-hint">Even with anonymized data, only use approved tools for customer-related tasks.</div>
+          <div class="toggle-row">
+            <button class="tog tog-y" onclick="ans(3,6,'yes',event)">Yes</button>
+            <button class="tog tog-n" onclick="ans(3,6,'no',event)">No</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-teal" onclick="verdict(3)">Get Verdict</button>
+      <button class="btn btn-secondary" onclick="reset(3)">Reset</button>
+    </div>
+    <div class="verdict" id="v-3">
+      <div class="verdict-icon">⚠️</div>
+      <div class="verdict-title">Use with Caution</div>
+      <div class="verdict-body">AI can help you draft this response — but only if you remove all identifying details first. Replace the customer's name, account number, and billing amount with placeholders before prompting. Once you have a draft, re-insert the correct details yourself, personalize the tone, and review carefully. The human sending this response must own the accountability — not the AI that helped write it.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {};
+[1,2,3].forEach(s => { state[s] = {}; for(let i=1;i<=6;i++) state[s][i]=null; });
+
+function ans(scenario, item, val, e) {
+  e.stopPropagation();
+  state[scenario][item] = val;
+  const itemEl = document.getElementById(`i-${scenario}-${item}`);
+  const boxEl = document.getElementById(`b-${scenario}-${item}`);
+  const risk = itemEl.dataset.risk;
+  itemEl.querySelectorAll('.tog').forEach(t => t.classList.remove('on'));
+  e.target.classList.add('on');
+  itemEl.classList.remove('flagged','cleared');
+  if (val === 'yes') { itemEl.classList.add('flagged'); boxEl.textContent = '!'; }
+  else { itemEl.classList.add('cleared'); boxEl.textContent = '✓'; }
+  updateProg(scenario);
+}
+
+function updateProg(s) {
+  const done = Object.values(state[s]).filter(v => v !== null).length;
+  document.getElementById(`pf-${s}`).style.width = (done/6*100) + '%';
+  document.getElementById(`pc-${s}`).textContent = `${done} / 6`;
+}
+
+function verdict(s) {
+  if (Object.values(state[s]).filter(v => v !== null).length < 6) { alert('Please answer all checklist items first.'); return; }
+  const v = document.getElementById(`v-${s}`);
+  v.classList.remove('go','caution','stop');
+  v.classList.add('show');
+  if (s === 1) v.classList.add('stop');
+  else if (s === 2) v.classList.add('go');
+  else v.classList.add('caution');
+  v.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function reset(s) {
+  for(let i=1;i<=6;i++) {
+    state[s][i] = null;
+    const itemEl = document.getElementById(`i-${s}-${i}`);
+    const boxEl = document.getElementById(`b-${s}-${i}`);
+    itemEl.classList.remove('flagged','cleared');
+    boxEl.textContent = '?';
+    itemEl.querySelectorAll('.tog').forEach(t => t.classList.remove('on'));
+  }
+  updateProg(s);
+  const v = document.getElementById(`v-${s}`);
+  v.classList.remove('show','go','caution','stop');
+}
+
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i+1===n));
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i+1===n));
+}
+</script>
+</body>
+</html>
